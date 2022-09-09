@@ -1,0 +1,276 @@
+<!DOCTYPE html>
+<html>
+<link/>
+
+<head>
+    <meta content="text/html;" http-equiv="Content-Type"/>
+    <meta charset="utf-8"/>
+    <meta
+        content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0"
+        name="viewport"
+    />
+    <title>盈嘉BOS3D浏览器</title>
+    <link
+        href="http://bos3d-alpha.bimwinner.com/static/UI/latest/BOS3DUI.min.css"
+        rel="stylesheet"
+        type="text/css"
+    />
+</head>
+
+<style>
+    .buttons {
+        position: absolute;
+        z-index: 2;
+    }
+
+    .button {
+        margin: 5px 0 5px 5px;
+        width: 120px;
+        height: 30px;
+        border-radius: 3px;
+        border: none;
+        background: #1d1d36;
+        color: #FFFFFF;
+        outline: none;
+        /*position: absolute;*/
+        z-index: 2;
+    }
+</style>
+
+<body >
+
+<div class='buttons'>
+    <button class="button" id="btnLoadVideo">投射视频</button>
+    <button class="button" id="btnPauseVideo">暂停播放</button>
+    <button class="button" id="btnMuteVideo">开启静音</button>
+    <button class="button" id="btnLoopVideo">开启循环</button>
+    <button class="button" id="btnUpdate">更新视频</button>
+</div>
+
+<div id="viewport" style="width: 100%; height: 100%"></div>
+<script src="http://bos3d-alpha.bimwinner.com/static/latest/BOS3D.min.js"></script>
+<script type="module">
+    // import * as BOS3D from "../../index.js";
+    // let GUI = dat.GUI;
+    const option = {
+        // host: "https://bos3d.bimwinner.com",
+        host: "http://building-bos3d.rickricks.com",
+        viewport: "viewport",
+    };
+    window.BOS3D = BOS3D;
+    window.THREE = BOS3D.THREE;
+
+    const viewer3D = new BOS3D.Viewer(option);
+    window.viewer3D = viewer3D;
+    // window.bos3dui = new window.BOS3DUI({
+    //     viewer3D: viewer3D,
+    //     BOS3D: BOS3D,
+    // });
+
+    const config = {
+        // M1658468642472
+        // modelKey: "M1654083185271",
+        modelKey: "M1654091244162",
+        dbName: "p4e42c78ae8142539874a8e6f577979a"
+    };
+
+    viewer3D.addView(config.modelKey, config.dbName);
+
+    const axesHelper = new THREE.AxesHelper(500000);
+    viewer3D.addToRootScene(axesHelper);
+
+    let viewAdded = false;
+
+    // 加载完成监听函数
+    viewer3D.registerModelEventListener(
+        window.BOS3D.EVENTS.ON_LOAD_COMPLETE,
+        () => {
+            viewAdded = true;
+        }
+    );
+
+    const cameraInfo = {
+        name: "persp",
+        position: {
+            x: 25270.85129194882,
+            y: -45332.14302522986,
+            z: 36149.62343     },
+        target: {
+            x: 129456.32601244687,
+            y: -11492.40211550938,
+            z: 25045.88824658388     },
+        up: {
+            x: 0.0030859708349571103,
+            y: 0.8001270528942394,
+            z: 0.5998226204560687     },
+        near: 49.99999999999993,
+        far: 118080.36684822406,
+        zoom: 1,
+        version: 1,
+        fov: 45,
+        aspect: 1.8569844789356984
+    };
+
+    // ************************** 添加视频 **************************
+    let isVideoAdded = false;
+    let video;
+
+    // 投射视频
+    function loadVideo() {
+        if (!viewAdded || isVideoAdded) {
+            return;
+        }
+        //构造视频管理器配置项
+        let videoManagerConfig = new BOS3D.Plugins.VideoManagerConfig();
+        videoManagerConfig.viewer = viewer3D;
+        //构造视频管理器
+        let videoManager = new BOS3D.Plugins.VideoManager(videoManagerConfig);
+        // 构造视频管理器配置项
+        let videoConfig = new BOS3D.Plugins.VideoConfig();
+        // 配置viewer、camera等参数
+        videoConfig.viewer = viewer3D;
+        //视频路径
+        // videoConfig.src = "https://cctvksh5c.v.kcdnvip.com/live/cdrmcctv10_1/index.m3u8"; // 中央1套
+        videoConfig.src = "https://gcalic.v.myalicdn.com/gc/wgw05_1/index.m3u8";
+        videoConfig.isPlaneOn = true;
+        videoConfig.plane = {
+            distance: 10900,
+            side: 0,
+        };
+        videoConfig.distance = 3000;
+        videoConfig.camera = {
+            position: cameraInfo.position,
+            direction: new THREE.Vector3(
+                cameraInfo.target.x - cameraInfo.position.x,
+                cameraInfo.target.y - cameraInfo.position.y,
+                cameraInfo.target.z - cameraInfo.position.z
+            ),
+            horizontalFov: Math.PI * 0.211,
+            verticalFov: Math.PI * 0.12,
+        };
+        //设置是否静音、循环播放
+        videoConfig.mute = false;
+        videoConfig.loop = false;
+        videoConfig.callback = callback;
+        isVideoAdded = true;
+        //构造视频对象
+        video = new BOS3D.Plugins.Video(videoConfig);
+        videoManager.addVideo(video);
+        window.videoManager = videoManager;
+    }
+
+    function callback() {
+        //播放视频
+        video.play();
+        viewer3D.flyTo(cameraInfo);
+    }
+
+    // ************************** 暂停播放 **************************
+    let isVideoPaused = false;
+
+    function pauseVideo() {
+        if (!viewAdded || !isVideoAdded) {
+            return;
+        }
+        if (!isVideoPaused) {
+            video.pause();
+            setButtonText("btnPauseVideo", "播放视频");
+        } else {
+            video.play();
+            setButtonText("btnPauseVideo", "暂停播放");
+        }
+        isVideoPaused = !isVideoPaused;
+    }
+
+    // ************************** 静音播放 **************************
+    let isVideoMuted = false;
+
+    function muteVideo() {
+        if (!viewAdded || !isVideoAdded) {
+            return;
+        }
+        if (!isVideoMuted) {
+            video.mute(true);
+            setButtonText("btnMuteVideo", "取消静音");
+        } else {
+            video.mute(false);
+            setButtonText("btnMuteVideo", "开启静音");
+        }
+        isVideoMuted = !isVideoMuted;
+    }
+
+    // ************************** 循环播放 **************************
+    let isVideoLooped = false;
+
+    function loopVideo() {
+        if (!viewAdded || !isVideoAdded) {
+            return;
+        }
+        if (!isVideoLooped) {
+            video.loop(true);
+            setButtonText("btnLoopVideo", "取消循环");
+        } else {
+            video.loop(false);
+            setButtonText("btnLoopVideo", "开启循环");
+        }
+        isVideoLooped = !isVideoLooped;
+    }
+
+    // ************************** 更新视频 **************************
+    function update() {
+        if (!viewAdded || !isVideoAdded) {
+            return;
+        }
+        //投射状态、构件状态发生变化时，可更新视频
+        video.update();
+    }
+
+    // *********************** 按钮文字 ***********************
+    function setButtonText(btnId, text) {
+        let dom = document.getElementById(btnId);
+        if (dom != null && dom.nodeName == "BUTTON") {
+            dom.innerText = text;
+        }
+    }
+
+    document.getElementById("btnLoadVideo").
+        addEventListener("click", function () {
+            loadVideo();
+        });
+    document.getElementById("btnPauseVideo").
+        addEventListener("click", function () {
+            pauseVideo();
+        });
+    document.getElementById("btnMuteVideo").
+        addEventListener("click", function () {
+            muteVideo();
+        });
+    document.getElementById("btnLoopVideo").
+        addEventListener("click", function () {
+            loopVideo();
+        });
+    document.getElementById("btnUpdate").
+        addEventListener("click", function () {
+            update();
+        });
+</script>
+<script
+    defer="defer"
+    src="http://bos3d-alpha.bimwinner.com/static/UI/latest/BOS3DUI.min.js"
+    type="application/javascript"
+></script>
+<script defer="defer" type="application/javascript">
+    document.body.onload = function () {
+        window.bos3dui = new BOS3DUI({
+            viewer3D: viewer3D,
+            BOS3D: BOS3D
+        });
+    };
+</script>
+<!--<div height="500px" width="500px">-->
+<!--    <video id="hmm-video" controls preload="auto" autoplay loop data-setp="{}" crossorigin="anonymous">-->
+<!--        <source src="video/6053aa7275dfc0d675edcd4b159f57dd.mp4"/>-->
+<!--    </video>-->
+<!--</div>-->
+</body>
+</html>

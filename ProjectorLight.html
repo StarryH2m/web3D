@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html>
+    <link />
+
+    <head>
+        <meta http-equiv="Content-Type" content="text/html;" />
+        <meta charset="utf-8" />
+        <meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0" />
+        <title>盈嘉BOS3D浏览器</title>
+        <link href="http://bos3d-alpha.bimwinner.com/static/UI/latest/BOS3DUI.min.css" rel="stylesheet" type="text/css" />
+    </head>
+
+    <body style="margin: 0px">
+    <button id="qqq">按钮</button>
+    <div id="viewport" style="width: 100%; height: 100%"></div>
+
+    <video muted id="video" loop  playsinline style="display: none">
+        <source src="video/video-0812-cut.mp4" type='video/mp4'/>
+    </video>
+        <script src="http://bos3d.bimwinner.com/static/latest/BOS3D.min.js" type="application/javascript"></script>
+    <!--    <script src="./js/dat.gui.js" type="application/javascript"></script>-->
+    <script type="module">
+        // import * as BOS3D from "../../index.js";
+        // import { GUI } from "./js/dat.gui.module.js";
+        let GUI = BOS3D.GUI;
+        window.BOS3D = BOS3D;
+        window.THREE = BOS3D.THREE;
+        var token = "";
+        var option = {
+            host: "http://building-bos3d.rickricks.com",
+            viewport: "viewport",
+        }; //生产环境
+
+        const cameraInfo = { // sort = 28
+            "name":"persp",
+            "position":{"x":68480.3971447999,"y":-21808.646949682272,"z":36092.680707876774},
+            "target":{"x":19917.735067139758,"y":76382.0301001462,"z":25033.890357825276},
+            "up":{"x":0.0030859708349481275,"y":0.8001270528955483,"z":0.5998226204543228},
+            "near":49.99999999999821,
+            "far":163123.37971676773,
+            "zoom":1,
+            "version":1,
+            "fov":45,
+            // "aspect":1.0643776824034334
+            "aspect": 2.2
+        };
+
+        // BOS3D.GlobalData.ContinueRender = true;
+        var viewer3D = new BOS3D.Viewer(option);
+        window.viewer3D = viewer3D;
+
+                let video = document.getElementById("video");
+                video.play();
+
+                let videoTexture = new THREE.VideoTexture(video);
+                let projectorLight = new BOS3D.ProjectorLight({
+                    viewer: viewer3D,
+                    enabledShadow: false,
+                    shadowBias: 15,
+                    //需要投影的纹理
+                    map: videoTexture,
+                    //alpha贴图
+                    alphaMap: videoTexture,
+                    //相机的张角
+                    fov: cameraInfo.fov,
+                    //横纵比
+                    aspect: cameraInfo.aspect,
+                    //投影距离
+                    distance: 15000,
+                    //混合颜色
+                    color: new THREE.Color(0xffffff),
+                    //颜色强度
+                    intensity: 1,
+                    zoom: cameraInfo.zoom,
+                    near: cameraInfo.near,
+                    far: cameraInfo.far,
+                });
+                projectorLight.target.set(
+                    cameraInfo.target.x, cameraInfo.target.y, cameraInfo.target.z
+                );
+
+                projectorLight.position.set(
+                    cameraInfo.position.x,cameraInfo.position.y,cameraInfo.position.z
+                );
+
+                projectorLight.alpha = 1.0;
+                projectorLight.needUpdate = true;
+
+                viewer3D.addToRootScene(projectorLight);
+
+                const helper = new BOS3D.ProjectorHelper(projectorLight);
+                viewer3D.addToRootScene(helper);
+
+                let view = projectorLight.getView();
+                console.log("hmm", projectorLight);
+                // viewer3D.flyTo(cameraInfo);
+                viewer3D.linearFlyTo(cameraInfo);
+        //         viewer3D.flyTo(projectorLight.getView(), function () {
+        //         });
+
+        // viewer3D.viewerImpl.getCamera()
+
+        viewer3D.addView("M1654091244162", "p4e42c78ae8142539874a8e6f577979a");
+
+        viewer3D.autoResize();
+
+    </script>
+        <script defer="defer" src="http://bos3d-alpha.bimwinner.com/static/UI/latest/BOS3DUI.min.js" type="application/javascript"></script>
+    </body>
+</html>

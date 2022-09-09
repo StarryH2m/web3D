@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+</head>
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <title>load</title>
+    <meta charset="UTF-8">
+</head>
+
+
+<body>
+</body>
+</html>
+
+<script type="module">
+
+    import * as THREE from "./three.js-r134/three.js-r134/build/three.module.js";
+    import {TrackballControls} from "./three.js-r134/three.js-r134/examples/jsm/controls/TrackballControls.js";
+    import {IFCLoader} from "./three.js-r134/three.js-r134/examples/jsm/loaders/IFCLoader.js";
+
+    var scene;
+    function initScene() {
+        scene = new THREE.Scene();
+        scene.background = new THREE.Color(0xffffff);
+    }
+
+    var camera;
+    function initCamera() {
+        camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 2000);
+        camera.position.set(10, 10, 10);
+        camera.lookAt(camera.position);
+        // camera.lookAt(new THREE.Vector3(0, 0, 0));
+        scene.add(camera);
+    }
+
+    function initLight() {
+        // const directionalLight1 = new THREE.DirectionalLight( 0xffeeff, 0.8 );
+        // directionalLight1.position.set( 1, 1, 1 );
+        // scene.add( directionalLight1 );
+        //
+        // const directionalLight2 = new THREE.DirectionalLight( 0xffffff, 0.8 );
+        // directionalLight2.position.set( - 1, 0.5, - 1 );
+        // scene.add( directionalLight2 );
+
+        const ambientLight = new THREE.AmbientLight(0xffffee, 0.25);
+        scene.add(ambientLight);
+
+        var light = new THREE.DirectionalLight(0xffffff);
+        light.position.set(0, 20, 20 );
+
+        light.castShadow = true;
+        light.shadow.camera.top = 10;
+        light.shadow.camera.bottom = -10;
+        light.shadow.camera.left = -10;
+        light.shadow.camera.right = 10;
+
+        //告诉平行光需要开启阴影投射
+        light.castShadow = true;
+
+        scene.add(light);
+    }
+
+    var renderer;
+    function initCanvasRender() {
+        renderer = new THREE.CanvasRenderer();
+        renderer.setClearColor(new THREE.Color(0x000000, 1.0));
+        document.body.appendChild(renderer.domElement);
+    }
+
+    function initRenderer() {
+        renderer = new THREE.WebGLRenderer();
+        renderer.setPixelRatio(window.devicePixelRatio);
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        renderer.setClearColor(new THREE.Color(0x000000, 1.0));
+        renderer.shadowMap.enabled = true; // 告诉渲染器需要阴影效果
+        document.body.appendChild(renderer.domElement);
+    }
+
+    var controls;
+    function initControls() {
+        controls = new TrackballControls( camera, renderer.domElement );
+        controls.rotateSpeed = 2.0;
+        controls.zoomSpeed = 1.2;
+        controls.panSpeed = 0.5;
+        controls.dynamicDampingFactor = 0.3; // 灵敏度
+    }
+
+    function animate() {
+        controls.update();
+        requestAnimationFrame(animate);
+        renderer.render(scene, camera);
+    }
+
+    // 加载ifc模型
+    function loadModel() {
+        var url = 'three.js-r134/three.js-r134/examples/models/ifc/rac_advanced_sample_project.ifc';
+        const ifcLoader = new IFCLoader();
+        ifcLoader.ifcManager.setWasmPath( 'ifc/' );
+        ifcLoader.load( url, function ( model ) {
+            scene.add( model );
+            // model.visible = false;
+            console.log("model", model);
+
+        });
+    }
+
+
+
+    function draw() {
+        initScene();
+        initCamera();
+        initLight();
+        initRenderer();
+        initControls();
+        loadModel();
+        animate();
+    }
+    window.onload = draw;
+
+</script>
+
+
